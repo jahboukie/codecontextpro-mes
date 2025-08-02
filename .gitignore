@@ -90,3 +90,6 @@ hn-memory-test.js
 memory-export.json
 memory-test-export.json
 test-results.json
+
+# AntiGoldfishMode
+.antigoldfishmode/

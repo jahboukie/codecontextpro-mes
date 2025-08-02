@@ -38,6 +38,32 @@ export interface PurchaseResult {
     checkoutUrl?: string;
 }
 
+export interface EncryptedLicenseData {
+    encrypted: string;
+    iv: string;
+    authTag: string;
+    algorithm: string;
+    keyDerivation: string;
+    integrityHash?: string;
+}
+
+export interface EncryptedApiKeyData {
+    encrypted: string;
+    iv: string;
+    authTag: string;
+    algorithm: string;
+}
+
+export interface FirebaseConfigData {
+    apiKey: string;
+    authDomain: string | undefined;
+    projectId: string;
+    storageBucket: string | undefined;
+    messagingSenderId: string | undefined;
+    appId: string | undefined;
+    databaseURL?: string | undefined;
+}
+
 export class LicenseService {
     private licenseFile: string;
     private apiKeyFile: string;
@@ -147,7 +173,7 @@ export class LicenseService {
             // Don't initialize if we're in skip mode and no distributed config exists
             try {
                 this.firebaseService.initializeIfNeeded();
-            } catch (firebaseInitError) {
+            } catch {
                 // If Firebase initialization fails, we might be in customer environment
                 // Try to create a minimal mock validation for activation
                 console.warn('⚠️ Firebase not available during activation - using mock validation for license format');
@@ -202,11 +228,11 @@ export class LicenseService {
                     await this.storeLicenseSecurely(license, licenseData.apiKey);
                     
                     this.currentLicense = license;
-                    console.log(`✅ License activated: ${license.tier} tier for ${licenseData.email.substring(0, 3)}***`);
+                    console.log(`✅ License activated: ${license.tier} tier for ${licenseData.email?.substring(0, 3) || 'unk'}***`);
                     
                     return license;
                     
-                } catch (secondTryError) {
+                } catch {
                     // If still failing, use mock for customer activation
                     console.log('🔧 Using mock activation for customer environment');
                     
@@ -260,13 +286,15 @@ export class LicenseService {
             };
 
             // Store Firebase config for customer environment (CRITICAL)
-            await this.distributeFirebaseConfig(licenseData.email);
+            if (licenseData.email) {
+                await this.distributeFirebaseConfig(licenseData.email);
+            }
 
             // Store license securely with encryption
             await this.storeLicenseSecurely(license, licenseData.apiKey);
 
             this.currentLicense = license;
-            console.log(`✅ License activated: ${license.tier} tier for ${licenseData.email.substring(0, 3)}***`);
+            console.log(`✅ License activated: ${license.tier} tier for ${licenseData.email?.substring(0, 3) || 'unk'}***`);
 
             return license;
 
@@ -311,7 +339,7 @@ export class LicenseService {
             try {
                 // Use the existing async loading method
                 await this.loadCurrentLicense();
-            } catch (loadError) {
+            } catch {
                 // If loading fails, check for development mode
                 if (process.env.CODECONTEXT_DEV_MODE === 'true' && process.env.NODE_ENV === 'development') {
                     console.log('🔧 Development mode: using mock developer license');
@@ -591,7 +619,7 @@ export class LicenseService {
      * Decrypt license synchronously (for getCurrentLicense)
      * CRITICAL FIX: Synchronous version of decryptLicense - matches async version exactly
      */
-    private decryptLicenseSync(encryptedLicenseData: any, apiKey: string): License | null {
+    private decryptLicenseSync(encryptedLicenseData: EncryptedLicenseData, apiKey: string): License | null {
         try {
             // Generate the same machine-specific encryption key
             const encryptionKey = this.generateLicenseEncryptionKey(apiKey);
@@ -650,7 +678,7 @@ export class LicenseService {
      * Decrypt API key synchronously (for getCurrentLicense)
      * CRITICAL FIX: Synchronous version of decryptApiKey
      */
-    private decryptApiKeySync(encryptedApiKeyData: any): string {
+    private decryptApiKeySync(encryptedApiKeyData: EncryptedApiKeyData): string {
         try {
             // Generate machine-specific key for API key decryption
             const machineKey = crypto.createHash('sha256').update(
@@ -675,7 +703,7 @@ export class LicenseService {
      * Decrypt and load license from secure file
      * CRITICAL SECURITY: Decrypts license with machine binding verification
      */
-    private async decryptLicense(encryptedLicenseData: any, apiKey: string): Promise<License | null> {
+    private async decryptLicense(encryptedLicenseData: EncryptedLicenseData, apiKey: string): Promise<License | null> {
         try {
             
             // Generate the same machine-specific encryption key
@@ -804,7 +832,7 @@ export class LicenseService {
                     this.currentLicense = null;
                 }
                 
-            } catch (apiKeyError) {
+            } catch {
                 console.log('📋 Could not load API key - license needs re-activation');
                 this.currentLicense = null;
             }
@@ -827,7 +855,7 @@ export class LicenseService {
 
             // CRITICAL FIX: Get Firebase config for customer distribution
             // This provides the real config customers need to connect to Firebase
-            let firebaseConfig: any;
+            let firebaseConfig: FirebaseConfigData;
 
             try {
                 // Fetching configuration...
@@ -839,7 +867,7 @@ export class LicenseService {
                     throw new Error(`Config fetch failed: ${configResponse.status}`);
                 }
 
-                firebaseConfig = await configResponse.json();
+                firebaseConfig = await configResponse.json() as FirebaseConfigData;
                 console.log('✅ Firebase configuration received from server');
 
             } catch (configError) {

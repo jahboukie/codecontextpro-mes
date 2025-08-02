@@ -12,6 +12,35 @@ import { LicenseService } from './LicenseService';
 
 export const version = "1.2.6";
 
+interface RememberOptions {
+    context: string;
+    type: string;
+}
+
+interface RecallOptions {
+    limit: string;
+}
+
+interface PurchaseOptions {
+    tier: string;
+    email?: string;
+}
+
+interface ScanOptions {
+    deep?: boolean;
+    type: string;
+}
+
+interface ExportOptions {
+    format: string;
+    output?: string;
+}
+
+interface SyncOptions {
+    push?: boolean;
+    pull?: boolean;
+}
+
 export class CodeContextCLI {
     private memoryEngine: MemoryEngine;
     private firebaseService: FirebaseService;
@@ -43,7 +72,7 @@ export class CodeContextCLI {
             .argument('<content>', 'Content to remember')
             .option('-c, --context <context>', 'Context for the memory', 'cli-command')
             .option('-t, --type <type>', 'Type of memory', 'general')
-            .action(async (content: string, options) => {
+            .action(async (content: string, options: RememberOptions) => {
                 await this.handleRemember(content, options);
             });
 
@@ -53,7 +82,7 @@ export class CodeContextCLI {
             .description('Search and retrieve memories')
             .argument('<query>', 'Search query')
             .option('-l, --limit <number>', 'Maximum number of results', '10')
-            .action(async (query: string, options) => {
+            .action(async (query: string, options: RecallOptions) => {
                 await this.handleRecall(query, options);
             });
 
@@ -71,7 +100,7 @@ export class CodeContextCLI {
             .description('Purchase CodeContext Pro license')
             .option('-t, --tier <tier>', 'License tier (memory)', 'memory')
             .option('--email <email>', 'Email for checkout')
-            .action(async (options) => {
+            .action(async (options: PurchaseOptions) => {
                 await this.handlePurchase(options);
             });
 
@@ -106,7 +135,7 @@ export class CodeContextCLI {
             .description('Scan project for patterns and store insights')
             .option('--deep', 'Perform deep pattern analysis')
             .option('-t, --type <type>', 'Type of scan (architecture, patterns, dependencies)', 'patterns')
-            .action(async (options) => {
+            .action(async (options: ScanOptions) => {
                 await this.handleScan(options);
             });
 
@@ -116,7 +145,7 @@ export class CodeContextCLI {
             .description('Export memory to file')
             .option('-f, --format <format>', 'Export format (json, markdown)', 'json')
             .option('-o, --output <file>', 'Output file path')
-            .action(async (options) => {
+            .action(async (options: ExportOptions) => {
                 await this.handleExport(options);
             });
 
@@ -126,7 +155,7 @@ export class CodeContextCLI {
             .description('Sync memories with cloud (Premium feature)')
             .option('--push', 'Push local memories to cloud')
             .option('--pull', 'Pull cloud memories to local')
-            .action(async (options) => {
+            .action(async (options: SyncOptions) => {
                 await this.handleSync(options);
             });
     }
@@ -193,7 +222,7 @@ export class CodeContextCLI {
      * Handle remember command with security validation
      * Implements Phase 1 Sprint 1.1 specification + Phase 2.2 usage enforcement
      */
-    private async handleRemember(content: string, options: any): Promise<void> {
+    private async handleRemember(content: string, options: RememberOptions): Promise<void> {
         try {
             console.log('🧠 CodeContext Pro - Remember');
             
@@ -201,7 +230,7 @@ export class CodeContextCLI {
             await this.validateUsageAndAuthenticate('remember');
 
             // Store memory with validation
-            const memoryId = this.memoryEngine.storeMemory(
+            const memoryId = await this.memoryEngine.storeMemory(
                 content,
                 options.context,
                 options.type
@@ -231,7 +260,7 @@ export class CodeContextCLI {
      * Handle recall command with security validation
      * Implements Phase 1 Sprint 1.1 specification + Phase 2.2 usage enforcement
      */
-    private async handleRecall(query: string, options: any): Promise<void> {
+    private async handleRecall(query: string, options: RecallOptions): Promise<void> {
         try {
             console.log('🔍 CodeContext Pro - Recall');
             
@@ -323,7 +352,7 @@ export class CodeContextCLI {
      * Handle purchase command 
      * Phase 1 Sprint 1.2: Secure license purchasing
      */
-    private async handlePurchase(options: any): Promise<void> {
+    private async handlePurchase(options: PurchaseOptions): Promise<void> {
         try {
             console.log('💳 CodeContext Pro - Purchase License');
             
@@ -407,6 +436,7 @@ export class CodeContextCLI {
             // CRITICAL FIX: Create services that skip Firebase initialization
             // This allows customers to activate without Firebase config being present
             const activationLicenseService = new LicenseService(process.cwd(), true);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const activationFirebaseService = (activationLicenseService as any).firebaseService;
             
             // Activate license through LicenseService with deferred Firebase init
@@ -442,7 +472,7 @@ export class CodeContextCLI {
                     licenseId: licenseKey.substring(0, 12) + '***',
                     error: error instanceof Error ? error.message : 'Unknown error'
                 });
-            } catch (reportError) {
+            } catch {
                 // Ignore reporting errors during failure
             }
             
@@ -562,7 +592,7 @@ export class CodeContextCLI {
     /**
      * Handle scan command - Phase 2.2 Deep Project Analysis
      */
-    private async handleScan(options: any): Promise<void> {
+    private async handleScan(options: ScanOptions): Promise<void> {
         try {
             console.log('🔍 CodeContext Pro - Project Scan');
             
@@ -586,7 +616,7 @@ export class CodeContextCLI {
             };
 
             // Store scan results as memory
-            const memoryId = this.memoryEngine.storeMemory(
+            const memoryId = await this.memoryEngine.storeMemory(
                 `Project scan results: Found ${insights.patterns.length} patterns in ${insights.filesScanned} files. Issues: ${insights.issuesFound}`,
                 'project-scan',
                 'scan-result'
@@ -617,7 +647,7 @@ export class CodeContextCLI {
     /**
      * Handle export command - Phase 2.2 Memory Export
      */
-    private async handleExport(options: any): Promise<void> {
+    private async handleExport(options: ExportOptions): Promise<void> {
         try {
             console.log('📤 CodeContext Pro - Export Memory');
             
@@ -662,7 +692,7 @@ export class CodeContextCLI {
     /**
      * Handle sync command - Phase 2.2 Cloud Sync (Stub)
      */
-    private async handleSync(options: any): Promise<void> {
+    private async handleSync(options: SyncOptions): Promise<void> {
         try {
             console.log('☁️ CodeContext Pro - Cloud Sync');
             
@@ -698,7 +728,7 @@ export class CodeContextCLI {
      * Run the CLI application
      */
     run(argv?: string[]): void {
-        this.program.parse(argv);
+        this.program.parse(argv || process.argv);
     }
 }
 

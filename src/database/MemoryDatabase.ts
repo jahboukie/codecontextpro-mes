@@ -31,6 +31,11 @@ declare module 'crypto' {
     function createDecipherGCM(algorithm: string, key: crypto.CipherKey, iv: crypto.BinaryLike): crypto.DecipherGCM;
 }
 
+// SQLite3 result type
+interface SQLiteRow {
+    [key: string]: unknown;
+}
+
 export interface DatabaseMemory {
     id: number;
     content: string;
@@ -408,7 +413,6 @@ export class MemoryDatabase {
             offset = 0,
             type,
             context,
-            tags,
             minRelevance = 0.1
         } = options;
 
@@ -429,7 +433,7 @@ export class MemoryDatabase {
             WHERE memories_fts MATCH ?
         `;
 
-        const params: any[] = [sanitizedQuery];
+        const params: (string | number)[] = [sanitizedQuery];
 
         // Add filters
         if (type) {
@@ -447,7 +451,7 @@ export class MemoryDatabase {
         params.push(limit, offset);
 
         return new Promise((resolve, reject) => {
-            this.db!.all(sql, params, (err, rows: any[]) => {
+            this.db!.all(sql, params, (err, rows: SQLiteRow[]) => {
                 if (err) {
                     console.error('❌ Search failed:', err.message);
                     reject(err);
@@ -455,13 +459,13 @@ export class MemoryDatabase {
                 }
 
                 const results: SearchResult[] = rows.map(row => ({
-                    id: row.id,
-                    content: row.content,
-                    relevance: this.calculateRelevance(row.rank),
-                    timestamp: row.timestamp,
-                    type: row.type,
-                    context: row.context,
-                    tags: JSON.parse(row.tags || '[]')
+                    id: row.id as number,
+                    content: row.content as string,
+                    relevance: this.calculateRelevance(row.rank as number),
+                    timestamp: row.timestamp as string,
+                    type: row.type as string,
+                    context: row.context as string,
+                    tags: JSON.parse((row.tags as string) || '[]')
                 }));
 
                 // Filter by minimum relevance
@@ -484,7 +488,7 @@ export class MemoryDatabase {
         return new Promise((resolve, reject) => {
             const sql = 'SELECT * FROM memories WHERE id = ?';
             
-            this.db!.get(sql, [id], (err, row: any) => {
+            this.db!.get(sql, [id], (err, row: SQLiteRow) => {
                 if (err) {
                     reject(err);
                     return;
@@ -496,15 +500,15 @@ export class MemoryDatabase {
                 }
 
                 resolve({
-                    id: row.id,
-                    content: row.content,
-                    context: row.context,
-                    type: row.type,
-                    tags: row.tags,
-                    metadata: row.metadata,
-                    contentHash: row.content_hash,
-                    createdAt: row.created_at,
-                    updatedAt: row.updated_at
+                    id: row.id as number,
+                    content: row.content as string,
+                    context: row.context as string,
+                    type: row.type as string,
+                    tags: row.tags as string,
+                    metadata: row.metadata as string,
+                    contentHash: row.content_hash as string,
+                    createdAt: row.created_at as string,
+                    updatedAt: row.updated_at as string
                 });
             });
         });
@@ -551,16 +555,16 @@ export class MemoryDatabase {
                 FROM memories
             `;
 
-            this.db!.get(sql, [], (err, row: any) => {
+            this.db!.get(sql, [], (err, row: SQLiteRow) => {
                 if (err) {
                     reject(err);
                     return;
                 }
 
                 resolve({
-                    totalMemories: row.total_memories || 0,
-                    totalSizeBytes: row.total_size_bytes || 0,
-                    lastUpdated: row.last_updated || new Date().toISOString()
+                    totalMemories: (row.total_memories as number) || 0,
+                    totalSizeBytes: (row.total_size_bytes as number) || 0,
+                    lastUpdated: (row.last_updated as string) || new Date().toISOString()
                 });
             });
         });

@@ -7,7 +7,8 @@
     "codecontextpro": "dist/cli.js"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc --project tsconfig.build.json",
+    "build:dev": "tsc",
     "dev": "ts-node src/index.ts",
     "test": "jest",
     "lint": "eslint \"src/**/*.ts\" \"firebase-setup/functions/src/**/*.ts\"",

@@ -9,6 +9,10 @@ import * as admin from 'firebase-admin';
 import Stripe from 'stripe';
 import * as cors from 'cors';
 import { Response, Request } from 'express';
+
+interface StripeWebhookRequest extends Request {
+    rawBody: Buffer;
+}
 import { onRequest, onCall, HttpsError } from 'firebase-functions/v2/https';
 import { setGlobalOptions } from 'firebase-functions/v2/options';
 import { defineSecret } from 'firebase-functions/params';
@@ -81,7 +85,7 @@ function validateEmail(email: string): boolean {
 /**
  * Security: Detect potential secrets in input data
  */
-function validateNoSecrets(data: any): void {
+function validateNoSecrets(data: Record<string, unknown>): void {
     const content = JSON.stringify(data);
     const secretPatterns = [
         new RegExp(['s', 'k', '_'].join('') + '[a-zA-Z0-9_]{20,}'),
@@ -313,7 +317,7 @@ export const stripeWebhook = onRequest(
                     process.env.STRIPE_SECRET_KEY || STRIPE_SECRET_KEY.value(),
                     { apiVersion: '2023-10-16' }
                 );
-                event = stripeInstance.webhooks.constructEvent((req as any).rawBody, sig, webhookSecret);
+                event = stripeInstance.webhooks.constructEvent((req as StripeWebhookRequest).rawBody, sig, webhookSecret);
             } catch (err) {
                 console.error('❌ Webhook signature verification failed:', err);
                 res.status(400).json({ error: 'Invalid signature' });
@@ -390,7 +394,7 @@ export const stripeWebhook = onRequest(
                         licenseStatus: 'active'
                     });
                     console.log('✅ Firebase Auth user created for license:', licenseId);
-                } catch (authError: any) {
+                } catch (authError: unknown) {
                     if (authError.code === 'auth/email-already-exists') {
                         console.log('ℹ️ Firebase Auth user already exists for email:', email.substring(0, 3) + '***');
                         // Update existing user's custom claims
@@ -435,7 +439,7 @@ export const stripeWebhook = onRequest(
  */
 export const validateLicense = onCall(
     { secrets: [ENCRYPTION_MASTER_KEY] },
-    async (data, context) => {
+    async (data) => {
         try {
             if (!data || typeof data !== 'object') {
                 throw new HttpsError(
@@ -555,7 +559,7 @@ export const validateLicense = onCall(
  * Get Authentication Token (v2)
  */
 export const getAuthToken = onCall(
-    async (data, context) => {
+    async (data) => {
         try {
             if (!data || typeof data !== 'object') {
                 throw new HttpsError(
@@ -614,7 +618,7 @@ export const getAuthToken = onCall(
 
             const uid = `license_${licenseData.id.replace('license_', '')}`;
 
-            const customClaims: Record<string, any> = {
+            const customClaims: Record<string, string | boolean | number> = {
                 licenseId: licenseData.id,
                 tier: licenseData.tier,
                 email: licenseData.email,
@@ -676,7 +680,7 @@ export const getAuthToken = onCall(
 /**
  * Report Usage Function (v2)
  */
-export const reportUsage = onCall(async (data, context) => {
+export const reportUsage = onCall(async (data) => {
     try {
         if (!data || typeof data !== 'object') {
             throw new HttpsError(
@@ -689,7 +693,7 @@ export const reportUsage = onCall(async (data, context) => {
 
         const { operation, metadata, projectId, timestamp, version } = (data as unknown) as {
             operation: string;
-            metadata: any;
+            metadata: Record<string, unknown>;
             projectId: string;
             timestamp: string;
             version: string;

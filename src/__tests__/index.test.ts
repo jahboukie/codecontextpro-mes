@@ -110,8 +110,6 @@ describe('CodeContextPro-MES Phase 1 Sprint 1.1', () => {
 
         it('should detect and reject secrets', async () => {
             // Test secret patterns without triggering CI/CD scanners
-            const stripePattern = 'stripe_key_' + 'test_pattern_detection';
-            const googlePattern = 'google_api_' + 'test_pattern_detection';
             
             // Test actual Stripe-like pattern (reconstructed to test our detection)
             const actualStripeTest = ['s', 'k', '_', 'test_', '4eC39HqLyjWDarjtT1zdp7dc'].join('');
@@ -258,6 +256,7 @@ describe('CodeContextPro-MES Phase 1 Sprint 1.1', () => {
             const validKey = `license_${Date.now()}_abcdef123`;
             
             // Mock the storeLicenseSecurely method to avoid encryption issues in tests
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             jest.spyOn(service as any, 'storeLicenseSecurely').mockResolvedValue(undefined);
             
             const result = await service.activateLicense(validKey);

@@ -24,7 +24,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { MemoryDatabase, SearchOptions } from './database/MemoryDatabase';
+import { MemoryDatabase, DatabaseMemory } from './database/MemoryDatabase';
 
 export interface Memory {
     id: number;
@@ -227,7 +227,7 @@ export class MemoryEngine {
      * Get memory by ID
      * Phase 1 Sprint 1.3: Database retrieval
      */
-    async getMemoryById(id: number): Promise<any | null> {
+    async getMemoryById(id: number): Promise<DatabaseMemory | null> {
         await this.initialize();
         return await this.database.getMemoryById(id);
     }

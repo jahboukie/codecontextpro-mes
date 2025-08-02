@@ -177,7 +177,9 @@ describe('LicenseService Phase 1 Sprint 1.2', () => {
             const validKey = `license_${Date.now()}_abcdef123`;
             
             // Mock the storeLicenseSecurely and distributeFirebaseConfig methods to avoid crypto/filesystem issues in tests
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             jest.spyOn(service as any, 'storeLicenseSecurely').mockResolvedValue(undefined);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             jest.spyOn(service as any, 'distributeFirebaseConfig').mockResolvedValue(undefined);
             
             // The mock in beforeEach should return a successful validation
@@ -217,8 +219,8 @@ describe('LicenseService Phase 1 Sprint 1.2', () => {
 
         it('should validate operation input', () => {
             expect(service.canPerformOperation('')).toBe(false);
-            expect(service.canPerformOperation(null as any)).toBe(false);
-            expect(service.canPerformOperation(undefined as any)).toBe(false);
+            expect(service.canPerformOperation(null as unknown as string)).toBe(false);
+            expect(service.canPerformOperation(undefined as unknown as string)).toBe(false);
         });
 
         it('should provide license status summary', () => {
@@ -234,17 +236,17 @@ describe('LicenseService Phase 1 Sprint 1.2', () => {
     describe('Security validations', () => {
         it('should validate input parameters for all methods', async () => {
             // Test null/undefined inputs
-            await expect(service.purchaseLicense(null as any)).resolves.toMatchObject({
+            await expect(service.purchaseLicense(null as unknown as string)).resolves.toMatchObject({
                 success: false,
                 message: expect.stringContaining('Tier is required')
             });
 
-            await expect(service.activateLicense(null as any)).rejects.toThrow(
+            await expect(service.activateLicense(null as unknown as string)).rejects.toThrow(
                 'License key is required'
             );
 
-            expect(service.hasFeature(null as any)).toBe(false);
-            expect(service.canPerformOperation(null as any)).toBe(false);
+            expect(service.hasFeature(null as unknown as string)).toBe(false);
+            expect(service.canPerformOperation(null as unknown as string)).toBe(false);
         });
 
         it('should handle whitespace-only inputs', async () => {

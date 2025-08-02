@@ -6,12 +6,30 @@
  * with comprehensive data sanitization and validation
  */
 
-import { initializeApp, getApps } from 'firebase/app';
-import { getFunctions, httpsCallable, connectFunctionsEmulator } from 'firebase/functions';
-import { getAuth, signInWithCustomToken } from 'firebase/auth';
+import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
+import { getFunctions, httpsCallable, connectFunctionsEmulator, Functions } from 'firebase/functions';
+import { getAuth, signInWithCustomToken, Auth } from 'firebase/auth';
 
 export interface UsageMetadata {
-    [key: string]: any;
+    [key: string]: string | number | boolean | undefined | { sanitized: boolean; type: string };
+}
+
+export interface LicenseValidationResponse {
+    valid: boolean;
+    tier: string;
+    status: string;
+    features: string[];
+    activatedAt?: string;
+    email?: string;
+    apiKey?: string;
+}
+
+export interface AuthTokenResponse {
+    customToken: string;
+    uid: string;
+    tier: string;
+    features: string[];
+    token?: string;
 }
 
 export interface UsageReport {
@@ -22,16 +40,38 @@ export interface UsageReport {
     version: string;
 }
 
+export interface FirebaseConfig {
+    apiKey: string | undefined;
+    authDomain: string | undefined;
+    projectId: string;
+    storageBucket: string | undefined;
+    messagingSenderId: string | undefined;
+    appId: string | undefined;
+    databaseURL?: string;
+}
+
+
+
+export interface UsageValidationResponse {
+    tier: string;
+    usage: {
+        remaining: number;
+    };
+}
+
 export class FirebaseService {
     private projectId: string;
     private apiEndpoint: string;
-    private app: any;
-    private functions: any;
-    private auth: any;
+    private app: FirebaseApp | null;
+    private functions: Functions | null;
+    private auth: Auth | null;
 
     constructor(skipInitialization: boolean = false) {
         this.projectId = process.env.FIREBASE_PROJECT_ID || 'codecontext-mes';
         this.apiEndpoint = `https://${this.projectId}.cloudfunctions.net`;
+        this.app = null;
+        this.functions = null;
+        this.auth = null;
         
         if (!skipInitialization) {
             // Initialize Firebase
@@ -65,7 +105,7 @@ export class FirebaseService {
      * Load Firebase configuration from distributed config file (customer environment)
      * CRITICAL: Enables customers to use CLI without dev environment variables
      */
-    private loadDistributedConfig(): any | null {
+    private loadDistributedConfig(): FirebaseConfig | null {
         try {
             const fs = require('fs');
             const path = require('path');
@@ -198,6 +238,9 @@ export class FirebaseService {
             
             try {
                 // Call Firebase Functions for usage reporting
+                if (!this.functions) {
+                    throw new Error('Firebase Functions not initialized');
+                }
                 const reportUsageFunction = httpsCallable(this.functions, 'reportUsage');
                 await reportUsageFunction(usageReport);
                 
@@ -326,7 +369,7 @@ export class FirebaseService {
      * Validate license with Firebase Functions
      * Phase 2 Sprint 2.1: Real license validation implementation
      */
-    async validateLicense(licenseKey: string): Promise<any> {
+    async validateLicense(licenseKey: string): Promise<LicenseValidationResponse> {
         try {
             // Input validation
             if (!licenseKey || typeof licenseKey !== 'string') {
@@ -349,14 +392,14 @@ export class FirebaseService {
             }
 
             console.log('✅ License validation successful');
-            return result.data;
+            return result.data as LicenseValidationResponse;
 
         } catch (error) {
             console.error('❌ License validation failed:', error);
             
             // Handle Firebase Functions errors
             if (error && typeof error === 'object' && 'code' in error) {
-                const firebaseError = error as any;
+                const firebaseError = error as { code?: string; message?: string };
                 throw new Error(`License validation failed: ${firebaseError.message || firebaseError.code}`);
             }
             
@@ -368,7 +411,7 @@ export class FirebaseService {
      * Validate Usage with Firebase Functions - Phase 2.2 Implementation
      * CRITICAL: Enforces usage limits with authentication
      */
-    async validateUsage(licenseKey: string, operation: string, email: string, authToken: string): Promise<any> {
+    async validateUsage(licenseKey: string, operation: string, email: string, authToken: string): Promise<boolean> {
         try {
             // Input validation
             if (!licenseKey || typeof licenseKey !== 'string') {
@@ -396,10 +439,16 @@ export class FirebaseService {
             console.log(`🛡️ Validating usage for operation: ${operation}`);
 
             // Authenticate with Firebase using custom token
+            if (!this.auth) {
+                throw new Error('Firebase Auth not initialized');
+            }
             await signInWithCustomToken(this.auth, authToken);
             console.log('🔑 Firebase authentication successful');
 
             // Call Firebase Functions with authenticated context
+            if (!this.functions) {
+                throw new Error('Firebase Functions not initialized');
+            }
             const validateUsageFunction = httpsCallable(this.functions, 'validateUsage');
             
             const result = await validateUsageFunction({
@@ -414,18 +463,18 @@ export class FirebaseService {
 
             console.log('✅ Usage validation successful', {
                 operation,
-                remaining: (result.data as any)?.usage?.remaining || 'unknown',
-                tier: (result.data as any)?.tier || 'unknown'
+                remaining: (result.data as { usage?: { remaining?: unknown } })?.usage?.remaining || 'unknown',
+                tier: (result.data as { tier?: string })?.tier || 'unknown'
             });
 
-            return result.data;
+            return true; // Usage validation passed
 
         } catch (error) {
             console.error('❌ Usage validation failed:', error);
             
             // Handle Firebase Functions errors
             if (error && typeof error === 'object' && 'code' in error) {
-                const firebaseError = error as any;
+                const firebaseError = error as { code?: string; message?: string };
                 
                 // Provide user-friendly error messages for common cases
                 if (firebaseError.code === 'functions/resource-exhausted') {
@@ -449,7 +498,7 @@ export class FirebaseService {
      * Get Firebase Auth Token - Phase 2.2 Implementation
      * Gets a custom Firebase Auth token for authenticated API calls
      */
-    async getAuthToken(licenseKey: string): Promise<any> {
+    async getAuthToken(licenseKey: string): Promise<AuthTokenResponse> {
         try {
             // Input validation
             if (!licenseKey || typeof licenseKey !== 'string') {
@@ -472,14 +521,14 @@ export class FirebaseService {
             }
 
             console.log('✅ Auth token generated successfully');
-            return result.data;
+            return result.data as AuthTokenResponse;
 
         } catch (error) {
             console.error('❌ Auth token generation failed:', error);
             
             // Handle Firebase Functions errors
             if (error && typeof error === 'object' && 'code' in error) {
-                const firebaseError = error as any;
+                const firebaseError = error as { code?: string; message?: string };
                 throw new Error(`Auth token generation failed: ${firebaseError.message || firebaseError.code}`);
             }
             
