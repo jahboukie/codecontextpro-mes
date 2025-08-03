@@ -896,6 +896,12 @@ export class LicenseService {
             const licenseDir = path.dirname(this.licenseFile);
             const configFile = path.join(licenseDir, 'firebase-config.json');
 
+            // CRITICAL FIX: Ensure directory exists before writing
+            const fsSync = require('fs');
+            if (!fsSync.existsSync(licenseDir)) {
+                fsSync.mkdirSync(licenseDir, { recursive: true });
+            }
+
             const configData = {
                 firebase: firebaseConfig,
                 distributedAt: new Date().toISOString(),
