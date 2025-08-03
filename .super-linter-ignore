@@ -1,0 +1,31 @@
+# Super-Linter ignore file
+# Exclude generated and build artifacts from linting
+
+# Generated JavaScript assets
+firebase-setup/public/assets/
+firebase-setup/functions/lib/
+
+# Build output
+dist/
+build/
+
+# Generated files
+*.d.ts
+
+# Simulation scripts (one-time use, not production code)
+firebase-config-simulation.js
+landing-page-migration-simulation.js
+build_config_analysis.js
+
+# Emergency scripts (one-time use)
+firebase-setup/emergency-create-licenses.js
+firebase-setup/build.js
+firebase-setup/functions/src/init-database.js
+
+# Package manager
+node_modules/
+package-lock.json
+
+# Test artifacts
+coverage/
+.nyc_output/

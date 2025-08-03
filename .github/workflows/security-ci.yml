@@ -34,12 +34,15 @@ jobs:
       run: npm audit --audit-level moderate
       
     - name: Static Application Security Testing (SAST)
-      uses: github/super-linter@v4
+      uses: github/super-linter@v5
       env:
         DEFAULT_BRANCH: main
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        VALIDATE_TYPESCRIPT_ES: true
-        VALIDATE_JAVASCRIPT_ES: true
+        VALIDATE_TYPESCRIPT: true
+        VALIDATE_JAVASCRIPT: true
+        LINTER_RULES_PATH: /
+        TYPESCRIPT_DEFAULT_STYLE: prettier
+        JAVASCRIPT_DEFAULT_STYLE: prettier
         
     - name: Secret Scanning
       run: |
