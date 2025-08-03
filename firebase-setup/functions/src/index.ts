@@ -395,7 +395,7 @@ export const stripeWebhook = onRequest(
                     });
                     console.log('✅ Firebase Auth user created for license:', licenseId);
                 } catch (authError: unknown) {
-                    if (authError.code === 'auth/email-already-exists') {
+                    if (authError && typeof authError === 'object' && 'code' in authError && authError.code === 'auth/email-already-exists') {
                         console.log('ℹ️ Firebase Auth user already exists for email:', email.substring(0, 3) + '***');
                         // Update existing user's custom claims
                         const existingUser = await admin.auth().getUserByEmail(email);
@@ -448,9 +448,9 @@ export const validateLicense = onCall(
                 );
             }
 
-            validateNoSecrets(data);
+            validateNoSecrets(data.data || {});
 
-            const { licenseKey } = (data as unknown) as { licenseKey: string };
+            const { licenseKey } = (data.data as unknown) as { licenseKey: string };
 
             if (!licenseKey || typeof licenseKey !== 'string') {
                 throw new HttpsError(
@@ -568,9 +568,9 @@ export const getAuthToken = onCall(
                 );
             }
 
-            validateNoSecrets(data);
+            validateNoSecrets(data.data || {});
 
-            const { licenseKey } = (data as unknown) as { licenseKey: string };
+            const { licenseKey } = (data.data as unknown) as { licenseKey: string };
 
             if (!licenseKey || typeof licenseKey !== 'string') {
                 throw new HttpsError(
@@ -689,9 +689,9 @@ export const reportUsage = onCall(async (data) => {
             );
         }
 
-        validateNoSecrets(data);
+        validateNoSecrets(data.data || {});
 
-        const { operation, metadata, projectId, timestamp, version } = (data as unknown) as {
+        const { operation, metadata, projectId, timestamp, version } = (data.data as unknown) as {
             operation: string;
             metadata: Record<string, unknown>;
             projectId: string;

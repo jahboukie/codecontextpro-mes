@@ -362,7 +362,7 @@ exports.stripeWebhook = (0, https_1.onRequest)({ secrets: [STRIPE_WEBHOOK_SECRET
                 console.log('✅ Firebase Auth user created for license:', licenseId);
             }
             catch (authError) {
-                if (authError.code === 'auth/email-already-exists') {
+                if (authError && typeof authError === 'object' && 'code' in authError && authError.code === 'auth/email-already-exists') {
                     console.log('ℹ️ Firebase Auth user already exists for email:', email.substring(0, 3) + '***');
                     // Update existing user's custom claims
                     const existingUser = await admin.auth().getUserByEmail(email);
@@ -400,13 +400,13 @@ exports.stripeWebhook = (0, https_1.onRequest)({ secrets: [STRIPE_WEBHOOK_SECRET
 /**
  * Validate License Function (v2)
  */
-exports.validateLicense = (0, https_1.onCall)({ secrets: [ENCRYPTION_MASTER_KEY] }, async (data, context) => {
+exports.validateLicense = (0, https_1.onCall)({ secrets: [ENCRYPTION_MASTER_KEY] }, async (data) => {
     try {
         if (!data || typeof data !== 'object') {
             throw new https_1.HttpsError('invalid-argument', 'Invalid request data');
         }
-        validateNoSecrets(data);
-        const { licenseKey } = data;
+        validateNoSecrets(data.data || {});
+        const { licenseKey } = data.data;
         if (!licenseKey || typeof licenseKey !== 'string') {
             throw new https_1.HttpsError('invalid-argument', 'License key is required and must be a string');
         }
@@ -476,13 +476,13 @@ exports.validateLicense = (0, https_1.onCall)({ secrets: [ENCRYPTION_MASTER_KEY]
 /**
  * Get Authentication Token (v2)
  */
-exports.getAuthToken = (0, https_1.onCall)(async (data, context) => {
+exports.getAuthToken = (0, https_1.onCall)(async (data) => {
     try {
         if (!data || typeof data !== 'object') {
             throw new https_1.HttpsError('invalid-argument', 'Invalid request data');
         }
-        validateNoSecrets(data);
-        const { licenseKey } = data;
+        validateNoSecrets(data.data || {});
+        const { licenseKey } = data.data;
         if (!licenseKey || typeof licenseKey !== 'string') {
             throw new https_1.HttpsError('invalid-argument', 'License key is required and must be a string');
         }
@@ -555,13 +555,13 @@ exports.getAuthToken = (0, https_1.onCall)(async (data, context) => {
 /**
  * Report Usage Function (v2)
  */
-exports.reportUsage = (0, https_1.onCall)(async (data, context) => {
+exports.reportUsage = (0, https_1.onCall)(async (data) => {
     try {
         if (!data || typeof data !== 'object') {
             throw new https_1.HttpsError('invalid-argument', 'Invalid request data');
         }
-        validateNoSecrets(data);
-        const { operation, metadata, projectId, timestamp, version } = data;
+        validateNoSecrets(data.data || {});
+        const { operation, metadata, projectId, timestamp, version } = data.data;
         if (!operation || typeof operation !== 'string') {
             throw new https_1.HttpsError('invalid-argument', 'Operation is required and must be a string');
         }
