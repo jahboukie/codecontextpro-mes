@@ -1,0 +1,52 @@
+{
+  "extends": [
+    "stylelint-config-standard",
+    "stylelint-config-recommended"
+  ],
+  "rules": {
+    "selector-class-pattern": null,
+    "selector-attribute-quotes": null,
+    "at-rule-empty-line-before": null,
+    "media-feature-range-notation": null,
+    "selector-pseudo-element-colon-notation": null,
+    "alpha-value-notation": null,
+    "custom-property-pattern": null,
+    "value-keyword-case": null,
+    "color-function-notation": null,
+    "declaration-block-trailing-semicolon": null,
+    "selector-pseudo-class-no-unknown": [
+      true,
+      {
+        "ignorePseudoClasses": ["global"]
+      }
+    ],
+    "property-no-unknown": [
+      true,
+      {
+        "ignoreProperties": ["composes"]
+      }
+    ],
+    "at-rule-no-unknown": [
+      true,
+      {
+        "ignoreAtRules": [
+          "tailwind",
+          "apply",
+          "variants",
+          "responsive",
+          "screen",
+          "layer"
+        ]
+      }
+    ]
+  },
+  "ignoreFiles": [
+    "public/assets/*.css",
+    "firebase-setup/public/assets/*.css",
+    "dist/**/*.css",
+    "build/**/*.css",
+    "coverage/**/*.css",
+    "node_modules/**/*.css",
+    "**/*.min.css"
+  ]
+}

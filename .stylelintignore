@@ -1,0 +1,17 @@
+# Ignore generated CSS files
+public/assets/*.css
+firebase-setup/public/assets/*.css
+dist/**/*.css
+build/**/*.css
+**/*.min.css
+
+# Ignore coverage and test artifacts
+coverage/**/*.css
+.nyc_output/**/*.css
+
+# Ignore third-party CSS
+node_modules/**/*.css
+
+# Ignore build artifacts from Firebase and other tools
+firebase-setup/functions/lib/**/*.css
+firebase-setup/dist/**/*.css

@@ -40,9 +40,12 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         VALIDATE_TYPESCRIPT: true
         VALIDATE_JAVASCRIPT: true
+        VALIDATE_CSS: true
         LINTER_RULES_PATH: /
         TYPESCRIPT_DEFAULT_STYLE: prettier
         JAVASCRIPT_DEFAULT_STYLE: prettier
+        CSS_FILE_NAME: .stylelintrc.json
+        FILTER_REGEX_EXCLUDE: ".*(public/assets|dist|coverage|node_modules)/.*"
         
     - name: Secret Scanning
       run: |

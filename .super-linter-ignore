@@ -29,3 +29,7 @@ package-lock.json
 # Test artifacts
 coverage/
 .nyc_output/
+
+# CSS files (handled separately by Stylelint)
+firebase-setup/public/assets/*.css
+**/*.min.css
