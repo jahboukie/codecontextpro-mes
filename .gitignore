@@ -11,13 +11,16 @@
 *.p12
 .secrets/
 
-# Firebase Secrets
-firebase-setup/.env
-firebase-setup/service-account.json
-firebase-setup/config/production.json
+# Web App Secrets
+web/.env
+web/.env.local
+web/.env.production
 
 # CodeContext Pro
 .codecontext/memory.db
+
+# Separate CLI Repository (published as codecontext-cli on npm)
+codecontextpro-cli/
 .codecontext/logs/
 .codecontext/sandbox/
 .codecontext/*.enc
@@ -36,7 +39,7 @@ logs/
 dist/
 build/
 .next/
-.firebase/
+web/dist/
 
 # IDE
 .vscode/settings.json

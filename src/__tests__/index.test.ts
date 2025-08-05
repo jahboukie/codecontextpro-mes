@@ -1,71 +1,30 @@
 /**
- * Tests for CodeContextPro-MES Phase 1 Sprint 1.1
- * Security-first testing approach with comprehensive coverage
+ * Tests for CodeContextPro-MES
+ * Modern SQLite-based memory system tests
  */
 
 import { version, CodeContextCLI } from '../index';
 import { MemoryEngine } from '../MemoryEngine';
-import { FirebaseService } from '../FirebaseService';
-import { LicenseService } from '../LicenseService';
 import * as fs from 'fs';
 import * as path from 'path';
-
-// Mock FirebaseService to avoid real Firebase calls during tests
-jest.mock('../FirebaseService');
-const MockedFirebaseService = FirebaseService as jest.MockedClass<typeof FirebaseService>;
 
 // Mock process.exit for testing
 const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {
     throw new Error(`Process exit called with code ${code}`);
 });
 
-describe('CodeContextPro-MES Phase 1 Sprint 1.1', () => {
+describe('CodeContextPro-MES', () => {
     const testProjectPath = process.cwd();
     const testCodecontextDir = path.join(testProjectPath, '.codecontext');
 
     beforeEach(() => {
-        // Set complete Firebase test environment
-        process.env.FIREBASE_PROJECT_ID = 'test-project';
-        process.env.FIREBASE_API_KEY = 'test-api-key';
-        process.env.FIREBASE_AUTH_DOMAIN = 'test-project.firebaseapp.com';
-        process.env.FIREBASE_STORAGE_BUCKET = 'test-project.appspot.com';
-        process.env.FIREBASE_MESSAGING_SENDER_ID = '123456789';
-        process.env.FIREBASE_APP_ID = '1:123456789:web:abcdef123456';
+        // Clean test environment
         jest.clearAllMocks();
 
         // Create .codecontext directory for tests if it doesn't exist
         if (!fs.existsSync(testCodecontextDir)) {
             fs.mkdirSync(testCodecontextDir, { recursive: true });
         }
-
-        // Setup FirebaseService mock implementations
-        const mockFirebaseService = MockedFirebaseService.prototype;
-        mockFirebaseService.validateLicense = jest.fn().mockResolvedValue({
-            valid: true,
-            tier: 'memory',
-            status: 'active',
-            features: ['memory_recalls_5000', 'unlimited_projects', 'persistent_memory', 'cloud_sync'],
-            activatedAt: new Date().toISOString(),
-            email: 'test@example.com',
-            apiKey: 'mock_user_encryption_key'
-        });
-
-        mockFirebaseService.reportUsage = jest.fn().mockImplementation((operation: string) => {
-            // Return false for empty/invalid operations, true for valid ones
-            return Promise.resolve(!!operation && operation.trim().length > 0);
-        });
-        mockFirebaseService.getConfig = jest.fn().mockReturnValue({
-            projectId: 'test-project',
-            apiEndpoint: 'mock-endpoint',
-            configured: true
-        });
-        mockFirebaseService.testConnection = jest.fn().mockResolvedValue(true);
-        mockFirebaseService.getAuthToken = jest.fn().mockResolvedValue({
-            customToken: 'mock_custom_token',
-            uid: 'mock_uid',
-            tier: 'memory',
-            features: ['memory_recalls_5000', 'unlimited_projects']
-        });
     });
 
     afterAll(() => {
@@ -86,7 +45,7 @@ describe('CodeContextPro-MES Phase 1 Sprint 1.1', () => {
 
     describe('version and exports', () => {
         it('should have correct version', () => {
-            expect(version).toBe('1.2.6');
+            expect(version).toBe('1.3.1');
         });
 
         it('should export CLI class', () => {
@@ -157,121 +116,7 @@ describe('CodeContextPro-MES Phase 1 Sprint 1.1', () => {
         });
     });
 
-    describe('FirebaseService security and reporting', () => {
-        let service: FirebaseService;
 
-        beforeEach(() => {
-            service = new FirebaseService();
-        });
-
-        it('should report usage with safe data', async () => {
-            const result = await service.reportUsage('test-operation', { safe: 'data' });
-            expect(result).toBe(true);
-        });
-
-        it('should sanitize sensitive metadata', async () => {
-            const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
-            
-            const testKey = ['s', 'k', '_', 'test_', '123456789012345'].join(''); // Reconstructed test key
-            const result = await service.reportUsage('test-operation', { 
-                secret: testKey,
-                password: 'mypassword'
-            });
-            
-            expect(result).toBe(true);
-            // The service should redact sensitive data (we can see it in console output)
-            // No need to check specific warning - the important thing is it doesn't leak secrets
-            
-            consoleSpy.mockRestore();
-        });
-
-        it('should validate operation input', async () => {
-            const result = await service.reportUsage('', {});
-            expect(result).toBe(false); // Should fail gracefully
-        });
-
-        it('should get configuration info', () => {
-            const config = service.getConfig();
-            expect(config.projectId).toBeDefined();
-            expect(config.apiEndpoint).toBeDefined();
-            expect(typeof config.configured).toBe('boolean');
-        });
-    });
-
-    describe('LicenseService validation and operations', () => {
-        let service: LicenseService;
-
-        beforeEach(() => {
-            // Enable development mode for license tests
-            process.env.CODECONTEXT_DEV_MODE = 'true';
-            process.env.NODE_ENV = 'development';
-            service = new LicenseService(testProjectPath);
-        });
-
-        afterEach(() => {
-            // Clean up environment variables
-            delete process.env.CODECONTEXT_DEV_MODE;
-            delete process.env.NODE_ENV;
-        });
-
-        it('should provide developer license for Phase 1', () => {
-            const license = service.getCurrentLicense();
-            expect(license.active).toBe(true);
-            expect(license.tier).toBe('developer');
-            expect(license.features).toContain('unlimited_memory');
-            expect(license.features).toContain('unlimited_execution');
-        });
-
-        it('should validate feature permissions', () => {
-            expect(service.hasFeature('unlimited_memory')).toBe(true);
-            expect(service.hasFeature('unlimited_execution')).toBe(true);
-            expect(service.hasFeature('nonexistent_feature')).toBe(false);
-        });
-
-        it('should allow operations in development mode', () => {
-            expect(service.canPerformOperation('remember')).toBe(true);
-            expect(service.canPerformOperation('recall')).toBe(true);
-            expect(service.canPerformOperation('execute')).toBe(true);
-        });
-
-        it('should validate purchase input', async () => {
-            // Without email, should fail with error message
-            const resultWithoutEmail = await service.purchaseLicense('memory');
-            expect(resultWithoutEmail.success).toBe(false);
-            expect(resultWithoutEmail.message).toContain('Email required for checkout');
-
-            // With email, should succeed
-            process.env.CODECONTEXT_USER_EMAIL = 'test@example.com';
-            const resultWithEmail = await service.purchaseLicense('memory');
-            expect(resultWithEmail.success).toBe(true);
-            expect(resultWithEmail.tier).toBe('memory');
-
-            // Invalid tier should return error (not throw)
-            const invalidTierResult = await service.purchaseLicense('invalid-tier');
-            expect(invalidTierResult.success).toBe(false);
-            expect(invalidTierResult.message).toContain('Invalid tier');
-        });
-
-        it('should validate license activation input', async () => {
-            const validKey = `license_${Date.now()}_abcdef123`;
-            
-            // Mock the storeLicenseSecurely method to avoid encryption issues in tests
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            jest.spyOn(service as any, 'storeLicenseSecurely').mockResolvedValue(undefined);
-            
-            const result = await service.activateLicense(validKey);
-            expect(result.active).toBe(true);
-            expect(result.key).toBe(validKey);
-
-            await expect(service.activateLicense('')).rejects.toThrow(
-                'License key is required'
-            );
-
-            await expect(service.activateLicense('short')).rejects.toThrow(
-                'Invalid license key format'
-            );
-        });
-    });
 
     describe('CLI integration security', () => {
         it('should instantiate without throwing', () => {

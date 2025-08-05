@@ -109,7 +109,7 @@ export class MemoryEngine {
 
         try {
             // Store in SQLite database
-            const memoryId = await this.database.storeMemory(
+            const memoryId = this.database.storeMemory(
                 content.trim(),
                 context || 'unknown',
                 type || 'general',
@@ -152,7 +152,7 @@ export class MemoryEngine {
 
         try {
             // Use real database search with FTS5
-            const results = await this.database.searchMemories(query, {
+            const results = this.database.searchMemories(query, {
                 limit,
                 minRelevance: 0.1
             });
@@ -220,7 +220,7 @@ export class MemoryEngine {
      */
     async getStats(): Promise<{ totalMemories: number; totalSizeBytes: number; lastUpdated: string }> {
         await this.initialize();
-        return await this.database.getStats();
+        return this.database.getStats();
     }
 
     /**
@@ -229,7 +229,7 @@ export class MemoryEngine {
      */
     async getMemoryById(id: number): Promise<DatabaseMemory | null> {
         await this.initialize();
-        return await this.database.getMemoryById(id);
+        return this.database.getMemoryById(id);
     }
 
     /**
@@ -238,7 +238,7 @@ export class MemoryEngine {
      */
     async deleteMemory(id: number): Promise<boolean> {
         await this.initialize();
-        return await this.database.deleteMemory(id);
+        return this.database.deleteMemory(id);
     }
 
     /**

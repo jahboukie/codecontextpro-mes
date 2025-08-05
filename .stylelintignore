@@ -1,6 +1,6 @@
 # Ignore generated CSS files
-public/assets/*.css
-firebase-setup/public/assets/*.css
+web/app/globals.css
+web/.next/**/*.css
 dist/**/*.css
 build/**/*.css
 **/*.min.css
@@ -12,6 +12,6 @@ coverage/**/*.css
 # Ignore third-party CSS
 node_modules/**/*.css
 
-# Ignore build artifacts from Firebase and other tools
-firebase-setup/functions/lib/**/*.css
-firebase-setup/dist/**/*.css
+# Ignore build artifacts from web app and other tools
+web/dist/**/*.css
+web/.next/**/*.css

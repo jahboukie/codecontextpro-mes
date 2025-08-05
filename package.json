@@ -1,9 +1,10 @@
 {
   "name": "codecontextpro-mes",
-  "version": "1.2.7",
-  "description": "CodeContextPro-MES: AI Cognitive Upgrade with Persistent Memory and Secure Execution Sandbox",
+  "version": "1.3.1",
+  "description": "CodeContextPro-MES: AI Memory Enhancement System - Persistent memory for AI coding assistants with SQLite + FTS5 search",
   "main": "dist/index.js",
   "bin": {
+    "ccpro": "dist/cli.js",
     "codecontextpro": "dist/cli.js"
   },
   "scripts": {
@@ -11,26 +12,52 @@
     "build:dev": "tsc",
     "dev": "ts-node src/index.ts",
     "test": "jest",
-    "lint": "eslint \"src/**/*.ts\" \"firebase-setup/functions/src/**/*.ts\"",
+    "lint": "eslint \"src/**/*.ts\"",
     "lint:fix": "eslint src/**/*.ts --fix",
     "security:audit": "npm audit",
     "security:check": "npm run lint && npm run security:audit",
     "security:scan": "git diff --cached --name-only | xargs grep -l \"sk_\\|pk_live\\|AIza[0-9A-Za-z\\\\-_]{35}\" || echo \"No secrets detected\"",
-    "deploy": "npm run build && npm run test && cd firebase-setup && node deploy.js",
-    "firebase:deploy": "cd firebase-setup/functions && npm run deploy",
-    "firebase:local": "cd firebase-setup && firebase emulators:start"
+    "deploy": "npm run build && npm run test",
+    "prepublishOnly": "npm run build && npm run test && npm run lint",
+    "publish:patch": "npm version patch && npm publish",
+    "publish:minor": "npm version minor && npm publish",
+    "publish:major": "npm version major && npm publish"
   },
   "keywords": [
     "ai",
     "memory",
     "coding-assistant",
     "claude",
-    "firebase",
-    "security"
+    "chatgpt",
+    "sqlite",
+    "fts5",
+    "search",
+    "cli",
+    "developer-tools",
+    "context",
+    "persistent-memory",
+    "local-first"
   ],
   "author": "CodeContext Team",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jahboukie/codecontextpro-mes.git"
+  },
+  "homepage": "https://github.com/jahboukie/codecontextpro-mes#readme",
+  "bugs": {
+    "url": "https://github.com/jahboukie/codecontextpro-mes/issues"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "dist/**/*",
+    "README.md",
+    "LICENSE"
+  ],
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.1.0",
     "@typescript-eslint/eslint-plugin": "^8.38.0",
@@ -43,12 +70,8 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
+    "better-sqlite3": "^11.10.0",
     "commander": "^14.0.0",
-    "dotenv": "^17.2.0",
-    "firebase": "^12.0.0",
-    "firebase-admin": "^13.4.0",
-    "firebase-functions": "^6.4.0",
-    "sqlite3": "^5.1.7",
-    "stripe": "^18.0.0"
+    "dotenv": "^17.2.0"
   }
 }

@@ -1,11 +1,11 @@
-# 🧠 CodeContextPro-MES
+# 🧠 CodeContextPro (ccpro)
 
 > **AI Cognitive Upgrade: Persistent Memory + Secure Execution Sandbox**
 
-**End AI amnesia forever.** CodeContextPro-MES gives AI coding assistants the persistent memory and execution capabilities they've always needed.
+**End AI amnesia forever.** CodeContextPro gives AI coding assistants the persistent memory and execution capabilities they've always needed.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![npm version](https://badge.fury.io/js/codecontextpro-mes.svg)](https://www.npmjs.com/package/codecontextpro-mes)
+[![npm version](https://badge.fury.io/js/ccpro.svg)](https://www.npmjs.com/package/ccpro)
 [![Tests](https://github.com/jahboukie/codecontextpro-mes/actions/workflows/test.yml/badge.svg)](https://github.com/jahboukie/codecontextpro-mes/actions)
 
 ## 🎯 **The Problem: AI Amnesia**
@@ -42,30 +42,30 @@ CodeContextPro-MES provides:
 
 ```bash
 # Install globally
-npm install -g codecontextpro-mes
+npm install -g ccpro
 
 # Check status and license
-codecontextpro status
+ccpro status
 
 # Start building context
-codecontextpro remember "Our API uses GraphQL with TypeScript strict mode"
-codecontextpro recall "GraphQL"
+ccpro remember "Our API uses GraphQL with TypeScript strict mode"
+ccpro recall "GraphQL"
 ```
 
 ## 🎮 **Quick Start**
 
 ```bash
 # 1. Check your setup
-codecontextpro status
+ccpro status
 
 # 2. Store important context
-codecontextpro remember "We use React with TypeScript and strict ESLint rules"
+ccpro remember "We use React with TypeScript and strict ESLint rules"
 
 # 3. Ask AI assistants to recall context
-codecontextpro recall "coding standards"
+ccpro recall "coding standards"
 
 # 4. Purchase license for unlimited access
-codecontextpro purchase
+ccpro purchase
 ```
 
 ## 💎 **Pricing**
@@ -80,7 +80,7 @@ codecontextpro purchase
 - ✅ **Cloud Sync**
 - ✅ **API Platform Support**
 
-[**Get Started →**](https://codecontextpro-mes.web.app)
+[**Get Started →**](https://ccpro.web.app)
 
 ## 🏗️ **Architecture**
 
@@ -147,8 +147,8 @@ Contributions to the MIT-licensed CLI components are welcome!
 ## 🐛 **Support**
 
 - 📧 **Email**: support@codecontext.pro
-- 💬 **Discord**: [Join our community](https://discord.gg/codecontextpro)
-- 🐛 **Issues**: [GitHub Issues](https://github.com/jahboukie/codecontextpro-mes/issues)
+- 💬 **Discord**: [Join our community](https://discord.gg/ccpro)
+- 🐛 **Issues**: [GitHub Issues](https://github.com/jahboukie/ccpro/issues)
 
 ## 📈 **Roadmap**
 
@@ -162,4 +162,4 @@ Contributions to the MIT-licensed CLI components are welcome!
 
 **Built by developers, for developers.** End AI amnesia today.
 
-[**Start Your Free Trial →**](https://codecontextpro-mes.web.app)
+[**Start Your Free Trial →**](https://ccpro.web.app)

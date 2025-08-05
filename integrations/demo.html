@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeContextPro Memory API Demo</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f8fafc;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #1e293b;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f1f5f9;
+            border-radius: 8px;
+        }
+        .section h3 {
+            color: #475569;
+            margin-top: 0;
+        }
+        input, textarea, button {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        button {
+            background: #6366f1;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        button:hover {
+            background: #5b5bd6;
+        }
+        .result {
+            background: #ecfdf5;
+            border: 1px solid #10b981;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 10px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .error {
+            background: #fef2f2;
+            border: 1px solid #ef4444;
+            color: #dc2626;
+        }
+        .memory-item {
+            background: white;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 6px;
+            border-left: 4px solid #6366f1;
+        }
+        .memory-meta {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧠 CodeContextPro Memory API Demo</h1>
+        <p style="text-align: center; color: #64748b;">
+            Live demo of persistent memory for LLMs • Server: <span id="serverStatus">Checking...</span>
+        </p>
+
+        <!-- Store Memory Section -->
+        <div class="section">
+            <h3>📝 Store Memory</h3>
+            <input type="text" id="storeContent" placeholder="What should I remember? (e.g., 'User prefers TypeScript over JavaScript')">
+            <input type="text" id="storeContext" placeholder="Context/Category (e.g., 'coding-preferences')" value="demo">
+            <button onclick="storeMemory()">💾 Store Memory</button>
+            <div id="storeResult"></div>
+        </div>
+
+        <!-- Search Memory Section -->
+        <div class="section">
+            <h3>🔍 Search Memory</h3>
+            <input type="text" id="searchQuery" placeholder="Search for... (e.g., 'TypeScript', 'preferences')">
+            <input type="number" id="searchLimit" placeholder="Max results" value="5" min="1" max="20">
+            <button onclick="searchMemory()">🔎 Search Memory</button>
+            <div id="searchResult"></div>
+        </div>
+
+        <!-- Memory Status Section -->
+        <div class="section">
+            <h3>📊 Memory Status</h3>
+            <button onclick="getStatus()">📈 Get Memory Statistics</button>
+            <div id="statusResult"></div>
+        </div>
+
+        <!-- LLM Integration Example -->
+        <div class="section">
+            <h3>🤖 LLM Integration Simulator</h3>
+            <p style="font-size: 14px; color: #64748b;">
+                This simulates how an LLM would use memory to provide personalized responses.
+            </p>
+            <textarea id="llmQuery" placeholder="Ask something that might relate to stored memories... (e.g., 'What programming language should I use?')" rows="3"></textarea>
+            <button onclick="simulateLLMWithMemory()">🧠 Simulate LLM with Memory</button>
+            <div id="llmResult"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3000';
+
+        // Check server status on load
+        window.onload = checkServerStatus;
+
+        async function checkServerStatus() {
+            try {
+                const response = await fetch(`${API_URL}/api/memory/status`);
+                if (response.ok) {
+                    document.getElementById('serverStatus').innerHTML = '<span style="color: #10b981;">✅ Online</span>';
+                } else {
+                    throw new Error('Server not responding');
+                }
+            } catch (error) {
+                document.getElementById('serverStatus').innerHTML = '<span style="color: #ef4444;">❌ Offline</span>';
+            }
+        }
+
+        async function storeMemory() {
+            const content = document.getElementById('storeContent').value;
+            const context = document.getElementById('storeContext').value || 'demo';
+            
+            if (!content) {
+                showResult('storeResult', 'Please enter content to store', true);
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/api/memory/remember`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content, context, type: 'demo' })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    showResult('storeResult', `✅ Memory stored successfully!\nMemory ID: ${result.memoryId}\nContent: "${content}"\nContext: ${context}`);
+                    document.getElementById('storeContent').value = '';
+                } else {
+                    showResult('storeResult', `❌ Failed to store memory: ${result.error}`, true);
+                }
+            } catch (error) {
+                showResult('storeResult', `❌ Error: ${error.message}`, true);
+            }
+        }
+
+        async function searchMemory() {
+            const query = document.getElementById('searchQuery').value;
+            const limit = document.getElementById('searchLimit').value || 5;
+            
+            if (!query) {
+                showResult('searchResult', 'Please enter a search query', true);
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/api/memory/recall?query=${encodeURIComponent(query)}&limit=${limit}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    if (result.memories.length === 0) {
+                        showResult('searchResult', `🔍 No memories found for "${query}"`);
+                    } else {
+                        let output = `🔍 Found ${result.memories.length} memories for "${query}":\n\n`;
+                        result.memories.forEach((memory, index) => {
+                            output += `${index + 1}. ${memory.content}\n`;
+                            output += `   Context: ${memory.context} | Relevance: ${memory.relevance}% | Date: ${memory.timestamp}\n\n`;
+                        });
+                        showResult('searchResult', output);
+                    }
+                } else {
+                    showResult('searchResult', `❌ Search failed: ${result.error}`, true);
+                }
+            } catch (error) {
+                showResult('searchResult', `❌ Error: ${error.message}`, true);
+            }
+        }
+
+        async function getStatus() {
+            try {
+                const response = await fetch(`${API_URL}/api/memory/status`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    const output = `📊 Memory System Status:
+
+📁 Project: ${result.project.path}
+💾 Database: ${result.project.dbPath}
+
+🧠 Memory Statistics:
+   Total Memories: ${result.memory.totalMemories}
+   Database Size: ${result.memory.totalSizeKB} KB
+   Last Updated: ${result.memory.lastUpdated}
+
+🚀 System Info:
+   Status: ${result.system.ready ? '✅ Ready' : '❌ Not Ready'}
+   Version: ${result.system.version}
+   Engine: ${result.system.engine}`;
+                    
+                    showResult('statusResult', output);
+                } else {
+                    showResult('statusResult', `❌ Status check failed: ${result.error}`, true);
+                }
+            } catch (error) {
+                showResult('statusResult', `❌ Error: ${error.message}`, true);
+            }
+        }
+
+        async function simulateLLMWithMemory() {
+            const query = document.getElementById('llmQuery').value;
+            
+            if (!query) {
+                showResult('llmResult', 'Please enter a query for the LLM simulation', true);
+                return;
+            }
+
+            try {
+                // Step 1: Search for relevant memories
+                const searchResponse = await fetch(`${API_URL}/api/memory/recall?query=${encodeURIComponent(query)}&limit=3`);
+                const searchResult = await searchResponse.json();
+                
+                let output = `🤖 LLM Simulation for: "${query}"\n\n`;
+                output += `🔍 Step 1: Searching memory for relevant context...\n`;
+                
+                if (searchResult.success && searchResult.memories.length > 0) {
+                    output += `✅ Found ${searchResult.memories.length} relevant memories:\n`;
+                    searchResult.memories.forEach((memory, index) => {
+                        output += `   ${index + 1}. ${memory.content} (${memory.context})\n`;
+                    });
+                    
+                    output += `\n🧠 Step 2: LLM generates personalized response using memory...\n`;
+                    output += `✅ Response: Based on your stored preferences and past interactions, I can provide a personalized answer that takes into account:\n`;
+                    searchResult.memories.forEach((memory) => {
+                        output += `   • ${memory.content}\n`;
+                    });
+                    output += `\n💡 This demonstrates how LLMs can use persistent memory to provide contextual, personalized responses!`;
+                } else {
+                    output += `📭 No relevant memories found.\n`;
+                    output += `🧠 Step 2: LLM generates generic response...\n`;
+                    output += `✅ Response: I'd be happy to help! However, I don't have any stored context about your preferences yet. As we interact more, I'll remember important details to provide better personalized assistance.`;
+                }
+                
+                showResult('llmResult', output);
+                
+            } catch (error) {
+                showResult('llmResult', `❌ Error: ${error.message}`, true);
+            }
+        }
+
+        function showResult(elementId, text, isError = false) {
+            const element = document.getElementById(elementId);
+            element.textContent = text;
+            element.className = isError ? 'result error' : 'result';
+        }
+    </script>
+</body>
+</html>

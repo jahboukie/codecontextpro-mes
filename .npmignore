@@ -10,7 +10,7 @@ __tests__/
 .claude/
 .env
 .env.*
-firebase-setup/
+web/
 test-*.js
 *-test-*.js
 *.json.map
@@ -24,7 +24,7 @@ memory-test-export.json
 test-results.json
 hn-memory-test.js
 IMPORTANT_DOCS_NEVER_COMMIT/
-FIREBASE_FUNCTIONS_TEST_FIX_REPORT.md
+MIGRATION_REPORT.md
 LICENSING.md
 
 # CRITICAL: Exclude codecontext-ai directory (contains sensitive development tools)

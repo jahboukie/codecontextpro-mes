@@ -9,7 +9,7 @@
   "exclude": [
     "node_modules",
     "dist",
-    "firebase-setup",
+    "web",
     "src/**/*.test.ts",
     "src/**/*.spec.ts",
     "src/__tests__/**/*",

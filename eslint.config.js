@@ -4,7 +4,7 @@ const typescriptParser = require('@typescript-eslint/parser');
 
 module.exports = [
     {
-        files: ['src/**/*.ts', 'firebase-setup/functions/src/**/*.ts'],
+        files: ['src/**/*.ts'],
         languageOptions: {
             parser: typescriptParser,
             parserOptions: {
